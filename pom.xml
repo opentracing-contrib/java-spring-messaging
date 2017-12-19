@@ -154,7 +154,7 @@
         <configuration>
           <subject>opentracing</subject>
           <repo>maven</repo>
-          <packageName>opentracing-spring-cloud</packageName>
+          <packageName>opentracing-spring-messaging</packageName>
         </configuration>
       </plugin>
       <plugin>
@@ -166,14 +166,11 @@
           <failIfUnknown>true</failIfUnknown>
           <excludes>
             <exclude>LICENSE</exclude>
-            <exclude>Makefile</exclude>
             <exclude>mvnw</exclude>
             <exclude>mvnw.cmd</exclude>
             <exclude>travis/publish.sh</exclude>
             <exclude>.mvn/wrapper/maven-wrapper.properties</exclude>
             <exclude>**/*.factories</exclude>
-            <exclude>**/ExecutorBeanPostProcessor.java</exclude>
-            <exclude>**/TraceEnvironmentPostProcessor.java</exclude>
             <exclude>**/test/resources/application.yml</exclude>
           </excludes>
         </configuration>
