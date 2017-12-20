@@ -20,8 +20,6 @@
   <groupId>io.opentracing.contrib</groupId>
   <artifactId>opentracing-spring-messaging-parent</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <modules>
-  </modules>
   <packaging>pom</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
@@ -59,9 +57,13 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.basedir>${project.basedir}</main.basedir>
 
+    <version.io.opentracing>0.30.0</version.io.opentracing>
+    <version.org.springframework.boot>1.5.8.RELEASE</version.org.springframework.boot>
+    <version.org.springframework.cloud>Dalston.SR4</version.org.springframework.cloud>
+
     <!-- plugins -->
-    <version.maven-compiler-plugin>3.6.2</version.maven-compiler-plugin>
     <version.maven-deploy-plugin>2.8.2</version.maven-deploy-plugin>
+    <version.maven-failsafe-plugin>2.20.1</version.maven-failsafe-plugin>
     <version.maven-license-plugin>3.0</version.maven-license-plugin>
     <version.maven-release-plugin>2.5.3</version.maven-release-plugin>
     <version.maven-source-plugin>3.0.1</version.maven-source-plugin>
@@ -75,6 +77,33 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.opentracing</groupId>
+        <artifactId>opentracing-api</artifactId>
+        <version>${version.io.opentracing}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentracing</groupId>
+        <artifactId>opentracing-mock</artifactId>
+        <version>${version.io.opentracing}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentracing</groupId>
+        <artifactId>opentracing-util</artifactId>
+        <version>${version.io.opentracing}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>3.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${version.org.springframework.boot}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -103,6 +132,46 @@
           <artifactId>maven</artifactId>
           <version>${version.io.takari-maven}</version>
         </plugin>
+        <plugin>
+          <groupId>io.zipkin.centralsync-maven-plugin</groupId>
+          <artifactId>centralsync-maven-plugin</artifactId>
+          <version>${version.io.zikin.centralsync-maven-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${version.maven-checkstyle-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${version.maven-deploy-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${version.maven-failsafe-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${version.maven-javadoc-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${version.maven-release-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${version.maven-source-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${version.maven-surefire-plugin}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -110,7 +179,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${version.maven-checkstyle-plugin}</version>
         <dependencies>
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
@@ -138,8 +206,8 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>${version.maven-release-plugin}</version>
         <configuration>
           <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
@@ -150,7 +218,6 @@
       <plugin>
         <groupId>io.zipkin.centralsync-maven-plugin</groupId>
         <artifactId>centralsync-maven-plugin</artifactId>
-        <version>${version.io.zikin.centralsync-maven-plugin}</version>
         <configuration>
           <subject>opentracing</subject>
           <repo>maven</repo>
@@ -193,8 +260,8 @@
         <plugins>
           <!-- Creates source jar -->
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>${version.maven-source-plugin}</version>
             <executions>
               <execution>
                 <id>attach-sources</id>
@@ -206,8 +273,8 @@
           </plugin>
           <!-- Creates javadoc jar -->
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>${version.maven-javadoc-plugin}</version>
             <configuration>
               <failOnError>false</failOnError>
             </configuration>
@@ -225,4 +292,9 @@
       </build>
     </profile>
   </profiles>
+
+  <modules>
+    <module>opentracing-spring-messaging</module>
+    <module>opentracing-spring-messaging-it</module>
+  </modules>
 </project>
