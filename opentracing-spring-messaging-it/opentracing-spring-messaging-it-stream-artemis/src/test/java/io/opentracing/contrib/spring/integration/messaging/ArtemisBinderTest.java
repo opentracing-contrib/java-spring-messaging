@@ -58,30 +58,6 @@ public class ArtemisBinderTest {
     tracer.reset();
   }
 
-  /**
-   * Sleuth flow:
-   * 1. Processing message before sending it to the channel
-   * 2. Parent span is null
-   * 3. Name of the span will be [message:output]
-   * 4. Marking span with client send
-   * 5. Completed sending and current span is [Trace: 4730e0ce0c182eb9, Span: 4730e0ce0c182eb9, Parent: null,
-   * exportable:false]
-   * 6. Marking span with client received
-   * 7. Closing messaging span [Trace: 4730e0ce0c182eb9, Span: 4730e0ce0c182eb9, Parent: null, exportable:false]
-   * 8. Messaging span [Trace: 4730e0ce0c182eb9, Span: 4730e0ce0c182eb9, Parent: null, exportable:false] successfully
-   * closed
-   * 9. Processing message before sending it to the channel
-   * 10. Parent span is [Trace: 4730e0ce0c182eb9, Span: 4730e0ce0c182eb9, Parent: null, exportable:false]
-   * 11. Name of the span will be [message:input]
-   * 13. Marking span with server received
-   * 14. Completed sending and current span is [Trace: 4730e0ce0c182eb9, Span: c8a8655bb5216278, Parent:
-   * 4730e0ce0c182eb9, exportable:false]
-   * 15. Marking span with server send
-   * 16. Closing messaging span [Trace: 4730e0ce0c182eb9, Span: c8a8655bb5216278, Parent: 4730e0ce0c182eb9,
-   * exportable:false]
-   * 17. Messaging span [Trace: 4730e0ce0c182eb9, Span: c8a8655bb5216278, Parent: 4730e0ce0c182eb9, exportable:false]
-   * successfully closed
-   */
   @Test
   public void testFlowFromSourceToSink() {
     sender.send("Ping");

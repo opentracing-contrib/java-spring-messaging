@@ -59,30 +59,6 @@ public class KafkaBinderTest {
     System.setProperty("spring.cloud.stream.kafka.binder.zkNodes", embeddedKafka.getZookeeperConnectionString());
   }
 
-  /**
-   * Sleuth flow:
-   * 1. Processing message before sending it to the channel
-   * 2. Parent span is null
-   * 3. Name of the span will be [message:output]
-   * 4. Marking span with client send
-   * 5. Completed sending and current span is [Trace: 91aeac586e6d3a99, Span: 91aeac586e6d3a99, Parent: null,
-   * exportable:false]
-   * 6. Marking span with client received
-   * 7. Closing messaging span [Trace: 91aeac586e6d3a99, Span: 91aeac586e6d3a99, Parent: null, exportable:false]
-   * 8. Stopped span: [Trace: 91aeac586e6d3a99, Span: 91aeac586e6d3a99, Parent: null, exportable:false]
-   * 9. Messaging span [Trace: 91aeac586e6d3a99, Span: 91aeac586e6d3a99, Parent: null, exportable:false]
-   * successfully closed
-   * 10. Processing message before sending it to the channel
-   * 11. Parent span is null
-   * 12. Name of the span will be [message:input]
-   * 13. Marking span with client send
-   * 14. Completed sending and current span is [Trace: 75f4f6f504ce8a9a, Span: 75f4f6f504ce8a9a, Parent: null,
-   * exportable:false]
-   * 15. Marking span with client received
-   * 16. Closing messaging span [Trace: 75f4f6f504ce8a9a, Span: 75f4f6f504ce8a9a, Parent: null, exportable:false]
-   * 17. Messaging span [Trace: 75f4f6f504ce8a9a, Span: 75f4f6f504ce8a9a, Parent: null, exportable:false]
-   * successfully closed
-   */
   @Test
   public void testFlowFromSourceToSink() {
     sender.send("Ping");

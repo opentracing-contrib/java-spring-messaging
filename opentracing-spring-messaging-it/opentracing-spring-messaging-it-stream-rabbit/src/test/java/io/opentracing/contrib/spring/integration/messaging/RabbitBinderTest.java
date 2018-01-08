@@ -58,30 +58,6 @@ public class RabbitBinderTest {
   @Autowired
   public RabbitBrokerRule rabbitBrokerRule;
 
-  /**
-   * Sleuth flow:
-   * 1. Processing message before sending it to the channel
-   * 2. Parent span is null
-   * 3. Name of the span will be [message:output]
-   * 4. Marking span with client send
-   * 5. Completed sending and current span is [Trace: 89df9af5dc34663e, Span: 89df9af5dc34663e, Parent: null,
-   * exportable:false]
-   * 6. Marking span with client received
-   * 7. Closing messaging span [Trace: 89df9af5dc34663e, Span: 89df9af5dc34663e, Parent: null, exportable:false]
-   * 8. Messaging span [Trace: 89df9af5dc34663e, Span: 89df9af5dc34663e, Parent: null, exportable:false] successfully
-   * closed
-   * 9. Processing message before sending it to the channel
-   * 10. Parent span is [Trace: 89df9af5dc34663e, Span: 89df9af5dc34663e, Parent: null, exportable:false]
-   * 11. Name of the span will be [message:input]
-   * 12. Marking span with server received
-   * 13. Completed sending and current span is [Trace: 89df9af5dc34663e, Span: f11085cf0d323b28, Parent:
-   * 89df9af5dc34663e, exportable:false]
-   * 14. Marking span with server send
-   * 15. Closing messaging span [Trace: 89df9af5dc34663e, Span: f11085cf0d323b28, Parent: 89df9af5dc34663e,
-   * exportable:false]
-   * 16. Messaging span [Trace: 89df9af5dc34663e, Span: f11085cf0d323b28, Parent: 89df9af5dc34663e, exportable:false]
-   * successfully closed
-   */
   @Test
   public void testFlowFromSourceToSink() {
     sender.send("Ping");
