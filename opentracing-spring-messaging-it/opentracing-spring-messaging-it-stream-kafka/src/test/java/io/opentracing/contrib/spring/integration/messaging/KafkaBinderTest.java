@@ -14,7 +14,6 @@
 
 package io.opentracing.contrib.spring.integration.messaging;
 
-import static io.opentracing.contrib.spring.integration.messaging.utils.SpanAssertions.assertEvents;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -23,7 +22,6 @@ import static org.hamcrest.Matchers.hasSize;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -71,7 +69,6 @@ public class KafkaBinderTest {
 
     MockSpan outputSpan = getSpanByOperation("send:output");
     assertThat(outputSpan.parentId()).isEqualTo(0);
-    assertEvents(outputSpan, Arrays.asList(Events.CLIENT_SEND, Events.CLIENT_RECEIVE));
     assertThat(outputSpan.tags()).hasSize(3);
     assertThat(outputSpan.tags()).containsEntry(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
     assertThat(outputSpan.tags()).containsEntry(Tags.COMPONENT.getKey(), OpenTracingChannelInterceptor.COMPONENT_NAME);
@@ -79,7 +76,6 @@ public class KafkaBinderTest {
 
     MockSpan inputSpan = getSpanByOperation("send:input");
     assertThat(inputSpan.parentId()).isEqualTo(0);
-    assertEvents(inputSpan, Arrays.asList(Events.CLIENT_SEND, Events.CLIENT_RECEIVE));
     assertThat(inputSpan.tags()).hasSize(3);
     assertThat(inputSpan.tags()).containsEntry(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
     assertThat(inputSpan.tags()).containsEntry(Tags.COMPONENT.getKey(), OpenTracingChannelInterceptor.COMPONENT_NAME);

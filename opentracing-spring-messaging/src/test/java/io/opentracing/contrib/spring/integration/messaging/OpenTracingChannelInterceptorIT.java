@@ -210,77 +210,9 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
     then(mockTracer.finishedSpans()).hasSize(1);
     MockSpan span = mockTracer.finishedSpans()
         .get(0);
-    then(span.logEntries()).hasSize(2);
-    then(span.logEntries()
-        .get(0)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(0)
-        .fields()
-        .get("event")).isEqualTo(Events.CLIENT_SEND);
-    then(span.logEntries()
-        .get(1)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(1)
-        .fields()
-        .get("event")).isEqualTo(Events.CLIENT_RECEIVE);
     then(span.tags()).hasSize(4);
     then(span.tags().get(Tags.ERROR.getKey()))
         .isEqualTo(true);
-  }
-
-  @Test
-  public void shouldLogClientReceivedClientSentEventWhenTheMessageIsSentAndReceived() {
-    tracedChannel.send(MessageBuilder.withPayload("hi")
-        .build());
-
-    then(mockTracer.finishedSpans()).hasSize(1);
-    MockSpan span = mockTracer.finishedSpans()
-        .get(0);
-    then(span.logEntries()).hasSize(2);
-
-    then(span.logEntries()
-        .get(0)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(0)
-        .fields()
-        .get("event")).isEqualTo(Events.CLIENT_SEND);
-    then(span.logEntries()
-        .get(1)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(1)
-        .fields()
-        .get("event")).isEqualTo(Events.CLIENT_RECEIVE);
-  }
-
-  @Test
-  public void shouldLogServerReceivedServerSentEventWhenTheMessageIsPropagatedToTheNextListener() {
-    tracedChannel.send(MessageBuilder.withPayload("hi")
-        .setHeader(Headers.MESSAGE_SENT_FROM_CLIENT, true)
-        .build());
-
-    then(mockTracer.finishedSpans()).hasSize(1);
-    MockSpan span = mockTracer.finishedSpans()
-        .get(0);
-    then(span.logEntries()).hasSize(2);
-
-    then(span.logEntries()
-        .get(0)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(0)
-        .fields()
-        .get("event")).isEqualTo(Events.SERVER_RECEIVE);
-    then(span.logEntries()
-        .get(1)
-        .fields()).containsOnlyKeys("event");
-    then(span.logEntries()
-        .get(1)
-        .fields()
-        .get("event")).isEqualTo(Events.SERVER_SEND);
   }
 
   @Test
