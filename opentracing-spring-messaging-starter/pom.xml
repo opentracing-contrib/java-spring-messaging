@@ -20,41 +20,37 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.opentracing.contrib</groupId>
-    <artifactId>opentracing-spring-messaging-it</artifactId>
+    <artifactId>opentracing-spring-messaging-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>opentracing-spring-messaging-it-stream-common</artifactId>
+  <artifactId>opentracing-spring-messaging-starter</artifactId>
 
   <properties>
-    <main.basedir>${project.basedir}/../..</main.basedir>
+    <main.basedir>${project.basedir}/..</main.basedir>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>io.opentracing.contrib</groupId>
-      <artifactId>opentracing-spring-messaging-starter</artifactId>
+      <artifactId>opentracing-spring-messaging</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.opentracing</groupId>
-      <artifactId>opentracing-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opentracing</groupId>
-      <artifactId>opentracing-mock</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opentracing</groupId>
-      <artifactId>opentracing-util</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-stream</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${version.maven-deploy-plugin}</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

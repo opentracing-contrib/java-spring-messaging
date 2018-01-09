@@ -296,6 +296,7 @@
 
   <modules>
     <module>opentracing-spring-messaging</module>
+    <module>opentracing-spring-messaging-starter</module>
     <module>opentracing-spring-messaging-it</module>
   </modules>
 </project>
