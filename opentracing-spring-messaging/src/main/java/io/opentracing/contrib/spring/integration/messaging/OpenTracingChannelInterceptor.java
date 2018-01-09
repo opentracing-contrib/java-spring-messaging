@@ -70,13 +70,11 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
     ActiveSpan span = spanBuilder.startActive();
 
     if (isConsumer) {
-      log.trace("Marking span with server received");
-      span.log(Events.SERVER_RECEIVE);
+      log.trace("Adding 'messageConsumed' header");
       carrier.put(Headers.MESSAGE_CONSUMED, "true");
       // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
     } else {
-      log.trace("Marking span with client send");
-      span.log(Events.CLIENT_SEND);
+      log.trace("Adding 'messageSent' header");
       carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
     }
 
@@ -87,19 +85,10 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
     ActiveSpan activeSpan = tracer.activeSpan();
-
     log.trace(String.format("Completed sending and current span is %s", activeSpan));
 
     if (activeSpan == null) {
       return;
-    }
-
-    if (message.getHeaders().containsKey(Headers.MESSAGE_CONSUMED)) {
-      log.trace("Marking span with server send");
-      activeSpan.log(Events.SERVER_SEND);
-    } else {
-      log.debug("Marking span with client received");
-      activeSpan.log(Events.CLIENT_RECEIVE);
     }
 
     handleException(ex, activeSpan);
@@ -111,14 +100,7 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
   @Override
   public Message<?> beforeHandle(Message<?> message, MessageChannel channel, MessageHandler handler) {
     ActiveSpan activeSpan = tracer.activeSpan();
-
     log.trace(String.format("Continuing span %s before handling message", activeSpan));
-
-    if (activeSpan != null) {
-      log.trace("Marking span with server received");
-      activeSpan.log(Events.SERVER_RECEIVE);
-      log.trace(String.format("Span %s successfully continued", activeSpan));
-    }
 
     return message;
   }
@@ -126,23 +108,19 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
   @Override
   public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
     ActiveSpan activeSpan = tracer.activeSpan();
-
     log.trace(String.format("Continuing span %s after message handled", activeSpan));
 
     if (activeSpan == null) {
       return;
     }
 
-    log.trace("Marking span with server send");
-    activeSpan.log(Events.SERVER_SEND);
-
     handleException(ex, activeSpan);
   }
 
   /**
-   *  Add exception related tags and logs to a span
+   * Add exception related tags and logs to a span
    *
-   * @param ex exception or null
+   * @param ex   exception or null
    * @param span span
    */
   protected void handleException(Exception ex, BaseSpan<?> span) {

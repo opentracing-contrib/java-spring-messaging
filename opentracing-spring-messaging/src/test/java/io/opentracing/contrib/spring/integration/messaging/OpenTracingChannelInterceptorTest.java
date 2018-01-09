@@ -17,7 +17,7 @@ package io.opentracing.contrib.spring.integration.messaging;
 import static io.opentracing.contrib.spring.integration.messaging.OpenTracingChannelInterceptor.COMPONENT_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -103,7 +103,6 @@ public class OpenTracingChannelInterceptorTest {
     verify(mockSpanBuilder).withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME);
     verify(mockSpanBuilder).withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), mockMessageChannel.toString());
     verify(mockSpanBuilder).withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
-    verify(mockActiveSpan).log(Events.CLIENT_SEND);
   }
 
   @Test
@@ -121,7 +120,6 @@ public class OpenTracingChannelInterceptorTest {
     verify(mockSpanBuilder).withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME);
     verify(mockSpanBuilder).withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), mockMessageChannel.toString());
     verify(mockSpanBuilder).withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
-    verify(mockActiveSpan).log(Events.SERVER_RECEIVE);
   }
 
   @Test
@@ -141,8 +139,6 @@ public class OpenTracingChannelInterceptorTest {
     interceptor.afterSendCompletion(message, null, true, null);
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).log(Events.SERVER_SEND);
-    verify(mockActiveSpan, times(0)).log(anyMap());
     verify(mockActiveSpan).close();
   }
 
@@ -153,8 +149,6 @@ public class OpenTracingChannelInterceptorTest {
     interceptor.afterSendCompletion(simpleMessage, null, true, null);
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).log(Events.CLIENT_RECEIVE);
-    verify(mockActiveSpan, times(0)).log(anyMap());
     verify(mockActiveSpan).close();
   }
 
@@ -164,56 +158,32 @@ public class OpenTracingChannelInterceptorTest {
     interceptor.afterSendCompletion(simpleMessage, null, true, new Exception("test"));
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).log(Events.CLIENT_RECEIVE);
     verify(mockActiveSpan).setTag(Tags.ERROR.getKey(), true);
     verify(mockActiveSpan).close();
   }
 
   @Test
-  public void beforeHandleShouldDoNothingWithoutSpan() {
+  public void beforeHandleShouldOlyGetActiveSpan() {
     interceptor.beforeHandle(null, null, null);
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan, times(0)).log(anyString());
   }
 
   @Test
-  public void beforeHandleShouldLogEvent() {
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
-
-    interceptor.beforeHandle(null, null, null);
-
-    verify(mockActiveSpan).log(Events.SERVER_RECEIVE);
-  }
-
-  @Test
-  public void afterMessageHandledShouldDoNothingWithoutSpan() {
+  public void afterMessageHandledShouldOnlyGetActiveSpan() {
     interceptor.afterMessageHandled(null, null, null, null);
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan, times(0)).log(anyString());
-    verify(mockActiveSpan, times(0)).log(anyMap());
+    verify(mockActiveSpan, times(0)).setTag(anyString(), anyBoolean());
   }
 
   @Test
-  public void afterMessageHandledShouldLogEvent() {
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
-
-    interceptor.afterMessageHandled(simpleMessage, null, null, null);
-
-    verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).log(Events.SERVER_SEND);
-    verify(mockActiveSpan, times(0)).log(anyMap());
-  }
-
-  @Test
-  public void afterMessageHandledShouldLogEventAndException() {
+  public void afterMessageHandledShouldGetActiveSpanAndTagAnException() {
     when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
 
     interceptor.afterMessageHandled(null, null, null, new Exception("test"));
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).log(Events.SERVER_SEND);
     verify(mockActiveSpan).setTag(Tags.ERROR.getKey(), true);
   }
 
