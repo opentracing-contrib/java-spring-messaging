@@ -14,25 +14,26 @@
 
 package io.opentracing.contrib.spring.integration.messaging;
 
-import io.opentracing.mock.MockTracer;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import io.opentracing.Tracer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.config.GlobalChannelInterceptor;
+import org.springframework.messaging.support.ChannelInterceptorAdapter;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-@SpringBootApplication
-public class StreamApplication {
-
-  public static void main(String... args) {
-    SpringApplication.run(StreamApplication.class, args);
-  }
+@Configuration
+@ConditionalOnBean(Tracer.class)
+@ConditionalOnClass(ChannelInterceptorAdapter.class)
+public class OpenTracingChannelInterceptorAutoConfiguration {
 
   @Bean
-  public MockTracer mockTracer() {
-    return new MockTracer(new ThreadLocalActiveSpanSource(), MockTracer.Propagator.TEXT_MAP);
+  @GlobalChannelInterceptor
+  public OpenTracingChannelInterceptor openTracingChannelInterceptor(Tracer tracer) {
+    return new OpenTracingChannelInterceptor(tracer);
   }
 
 }
