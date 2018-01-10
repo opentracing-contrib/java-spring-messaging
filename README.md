@@ -8,6 +8,15 @@ This repository provides OpenTracing instrumentation for various frameworks that
 
 > **Note**: make sure that an `io.opentracing.Tracer` bean is available. It is not provided by this library.
 
+### Spring Boot
+Add the following starter dependency to your pom.xml:
+```xml
+<dependency>
+  <groupId>io.opentracing.contrib</groupId>
+  <artifactId>opentracing-spring-messaging-starter</artifactId>
+</dependency>
+```
+
 ### Spring
 Add the following dependency to your pom.xml:
 ```xml
@@ -24,15 +33,6 @@ And register an interceptor bean:
 public OpenTracingChannelInterceptor openTracingChannelInterceptor(Tracer tracer) {
   return new OpenTracingChannelInterceptor(tracer);
 }
-```
-
-### Spring Boot
-Add the following starter dependency to your pom.xml:
-```xml
-<dependency>
-  <groupId>io.opentracing.contrib</groupId>
-  <artifactId>opentracing-spring-messaging-starter</artifactId>
-</dependency>
 ```
 
 ## Development
