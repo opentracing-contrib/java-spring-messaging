@@ -28,7 +28,7 @@
   <properties>
     <main.basedir>${project.basedir}/../..</main.basedir>
 
-    <version.io.opentracing.contrib.opentracing-spring-cloud-starter>0.0.7</version.io.opentracing.contrib.opentracing-spring-cloud-starter>
+    <version.io.opentracing.contrib.opentracing-spring-cloud-starter>0.1.0</version.io.opentracing.contrib.opentracing-spring-cloud-starter>
     <version.me.snowdrop.spring-cloud-starter-stream-artemis>1.0.0.Alpha1</version.me.snowdrop.spring-cloud-starter-stream-artemis>
     <version.org.apache.activemq>2.1.0</version.org.apache.activemq>
   </properties>

@@ -17,12 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.BDDAssertions.then;
 
-import io.opentracing.ActiveSpan;
+import io.opentracing.Scope;
 import io.opentracing.Tracer;
 import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.tag.Tags;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -162,13 +161,14 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
   public void shouldCreateSpanWithActiveParent() {
     MockSpan parentSpan = mockTracer.buildSpan("http:testSendMessage")
         .start();
-    try (ActiveSpan activeSpan = mockTracer.makeActive(parentSpan)) {
+    try (Scope scope = mockTracer.scopeManager().activate(parentSpan, true)) {
       tracedChannel.send(MessageBuilder.withPayload("hi")
           .build());
     }
 
     then(message).isNotNull();
     then(message.getHeaders()).containsKeys(TRACE_ID_HEADER, SPAN_ID_HEADER);
+    mockTracer.finishedSpans().forEach(System.out::println);
     then(mockTracer.finishedSpans()).hasSize(2);
 
     MockSpan interceptorSpan = mockTracer.finishedSpans().get(0);
@@ -237,7 +237,7 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
   static class App {
     @Bean
     public MockTracer mockTracer() {
-      return new MockTracer(new ThreadLocalActiveSpanSource(), MockTracer.Propagator.TEXT_MAP);
+      return new MockTracer();
     }
 
     @Bean

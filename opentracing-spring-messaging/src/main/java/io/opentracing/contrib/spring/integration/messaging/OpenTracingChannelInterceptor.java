@@ -13,9 +13,9 @@
  */
 package io.opentracing.contrib.spring.integration.messaging;
 
-import io.opentracing.ActiveSpan;
-import io.opentracing.BaseSpan;
 import io.opentracing.References;
+import io.opentracing.Scope;
+import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.Tracer.SpanBuilder;
@@ -66,7 +66,7 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
       spanBuilder.asChildOf(extractedContext);
     }
 
-    ActiveSpan span = spanBuilder.startActive();
+    Span span = spanBuilder.startActive(true).span();
 
     if (isConsumer) {
       log.trace("Adding 'messageConsumed' header");
@@ -83,37 +83,36 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
 
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-    ActiveSpan activeSpan = tracer.activeSpan();
-    log.trace(String.format("Completed sending and current span is %s", activeSpan));
-
-    if (activeSpan == null) {
+    Scope scope = tracer.scopeManager().active();
+    if (scope == null) {
       return;
     }
 
-    handleException(ex, activeSpan);
-    log.trace("Closing messaging span " + activeSpan);
-    activeSpan.close();
-    log.trace(String.format("Messaging span %s successfully closed", activeSpan));
+    log.trace(String.format("Completed sending and current span is %s", scope.span()));
+    handleException(ex, scope.span());
+    log.trace("Closing messaging span scope " + scope);
+    scope.close();
+    log.trace(String.format("Messaging span scope %s successfully closed", scope));
   }
 
   @Override
   public Message<?> beforeHandle(Message<?> message, MessageChannel channel, MessageHandler handler) {
-    ActiveSpan activeSpan = tracer.activeSpan();
-    log.trace(String.format("Continuing span %s before handling message", activeSpan));
+    Span span = tracer.activeSpan();
+    log.trace(String.format("Continuing span %s before handling message", span));
 
     return message;
   }
 
   @Override
   public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
-    ActiveSpan activeSpan = tracer.activeSpan();
-    log.trace(String.format("Continuing span %s after message handled", activeSpan));
+    Span span = tracer.activeSpan();
+    log.trace(String.format("Continuing span %s after message handled", span));
 
-    if (activeSpan == null) {
+    if (span == null) {
       return;
     }
 
-    handleException(ex, activeSpan);
+    handleException(ex, span);
   }
 
   /**
@@ -122,7 +121,7 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
    * @param ex   exception or null
    * @param span span
    */
-  protected void handleException(Exception ex, BaseSpan<?> span) {
+  protected void handleException(Exception ex, Span span) {
     if (ex != null) {
       Tags.ERROR.set(span, true);
       // TODO add exception logs
