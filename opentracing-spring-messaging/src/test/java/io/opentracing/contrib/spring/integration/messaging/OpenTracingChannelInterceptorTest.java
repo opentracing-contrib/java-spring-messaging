@@ -23,8 +23,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.opentracing.ActiveSpan;
 import io.opentracing.References;
+import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
+import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
@@ -50,7 +52,13 @@ public class OpenTracingChannelInterceptorTest {
   private Tracer.SpanBuilder mockSpanBuilder;
 
   @Mock
-  private ActiveSpan mockActiveSpan;
+  private ScopeManager mockScopeManager;
+
+  @Mock
+  private Scope mockScope;
+
+  @Mock
+  private Span mockSpan;
 
   @Mock
   private SpanContext mockSpanContext;
@@ -70,9 +78,11 @@ public class OpenTracingChannelInterceptorTest {
     MockitoAnnotations.initMocks(this);
     when(mockTracer.buildSpan(anyString())).thenReturn(mockSpanBuilder);
     when(mockSpanBuilder.asChildOf(any(SpanContext.class))).thenReturn(mockSpanBuilder);
-    when(mockSpanBuilder.startActive()).thenReturn(mockActiveSpan);
+    when(mockSpanBuilder.startActive(true)).thenReturn(mockScope);
+    when(mockTracer.scopeManager()).thenReturn(mockScopeManager);
+    when(mockScope.span()).thenReturn(mockSpan);
     when(mockSpanBuilder.withTag(anyString(), anyString())).thenReturn(mockSpanBuilder);
-    when(mockActiveSpan.context()).thenReturn(mockSpanContext);
+    when(mockSpan.context()).thenReturn(mockSpanContext);
 
     interceptor = new OpenTracingChannelInterceptor(mockTracer);
     simpleMessage = MessageBuilder.withPayload("test")
@@ -98,7 +108,7 @@ public class OpenTracingChannelInterceptorTest {
     assertThat(message.getHeaders()).containsKey(Headers.MESSAGE_SENT_FROM_CLIENT);
 
     verify(mockTracer).buildSpan(String.format("send:%s", mockMessageChannel.toString()));
-    verify(mockSpanBuilder).startActive();
+    verify(mockSpanBuilder).startActive(true);
     verify(mockSpanBuilder).withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME);
     verify(mockSpanBuilder).withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), mockMessageChannel.toString());
     verify(mockSpanBuilder).withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
@@ -115,7 +125,7 @@ public class OpenTracingChannelInterceptorTest {
     verify(mockTracer).extract(eq(Format.Builtin.TEXT_MAP), any(MessageTextMap.class));
     verify(mockTracer).buildSpan(String.format("receive:%s", mockMessageChannel.toString()));
     verify(mockSpanBuilder).addReference(References.FOLLOWS_FROM, null);
-    verify(mockSpanBuilder).startActive();
+    verify(mockSpanBuilder).startActive(true);
     verify(mockSpanBuilder).withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME);
     verify(mockSpanBuilder).withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), mockMessageChannel.toString());
     verify(mockSpanBuilder).withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
@@ -125,8 +135,7 @@ public class OpenTracingChannelInterceptorTest {
   public void afterSendCompletionShouldDoNothingWithoutSpan() {
     interceptor.afterSendCompletion(null, null, true, null);
 
-    verify(mockTracer).activeSpan();
-    verify(mockActiveSpan, times(0)).log(anyString());
+    verify(mockSpan, times(0)).log(anyString());
   }
 
   @Test
@@ -134,31 +143,30 @@ public class OpenTracingChannelInterceptorTest {
     Message<?> message = MessageBuilder.fromMessage(simpleMessage)
         .setHeader(Headers.MESSAGE_CONSUMED, true)
         .build();
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
+    when(mockScopeManager.active()).thenReturn(mockScope);
+
     interceptor.afterSendCompletion(message, null, true, null);
 
-    verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).close();
+    verify(mockScope).close();
   }
 
   @Test
   public void afterSendCompletionShouldFinishSpanForClientSendMessage() {
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
+    when(mockScopeManager.active()).thenReturn(mockScope);
 
     interceptor.afterSendCompletion(simpleMessage, null, true, null);
 
-    verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).close();
+    verify(mockScope).close();
   }
 
   @Test
   public void afterSendCompletionShouldFinishSpanForException() {
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
+    when(mockScopeManager.active()).thenReturn(mockScope);
+
     interceptor.afterSendCompletion(simpleMessage, null, true, new Exception("test"));
 
-    verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).setTag(Tags.ERROR.getKey(), true);
-    verify(mockActiveSpan).close();
+    verify(mockSpan).setTag(Tags.ERROR.getKey(), true);
+    verify(mockScope).close();
   }
 
   @Test
@@ -173,17 +181,17 @@ public class OpenTracingChannelInterceptorTest {
     interceptor.afterMessageHandled(null, null, null, null);
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan, times(0)).setTag(anyString(), anyBoolean());
+    verify(mockSpan, times(0)).setTag(anyString(), anyBoolean());
   }
 
   @Test
   public void afterMessageHandledShouldGetActiveSpanAndTagAnException() {
-    when(mockTracer.activeSpan()).thenReturn(mockActiveSpan);
+    when(mockTracer.activeSpan()).thenReturn(mockSpan);
 
     interceptor.afterMessageHandled(null, null, null, new Exception("test"));
 
     verify(mockTracer).activeSpan();
-    verify(mockActiveSpan).setTag(Tags.ERROR.getKey(), true);
+    verify(mockSpan).setTag(Tags.ERROR.getKey(), true);
   }
 
 }

@@ -14,7 +14,6 @@
 package io.opentracing.contrib.spring.integration.messaging;
 
 import io.opentracing.mock.MockTracer;
-import io.opentracing.util.ThreadLocalActiveSpanSource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +30,7 @@ public class StreamApplication {
 
   @Bean
   public MockTracer mockTracer() {
-    return new MockTracer(new ThreadLocalActiveSpanSource(), MockTracer.Propagator.TEXT_MAP);
+    return new MockTracer();
   }
 
 }
