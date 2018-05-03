@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 The OpenTracing Authors
+ * Copyright 2017-2018 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -20,8 +20,10 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
+import org.springframework.integration.support.MutableMessageHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
@@ -61,6 +63,20 @@ public class MessageTextMapTest {
 
     assertThat(updatedMessage.getPayload()).isEqualTo(message.getPayload());
     assertThat(updatedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("k1", "v1"));
+  }
+
+  @Test
+  public void shouldPreserveTimestampAndId() {
+    MutableMessageHeaders headers = new MutableMessageHeaders(new HashMap<>());
+    headers.put("id", "1");
+    headers.put("timestamp", "123456789");
+    Message<String> message = MessageBuilder.createMessage("test", headers);
+
+    MessageTextMap<String> map = new MessageTextMap<>(message);
+    Message<String> copiedMessage = map.getMessage();
+
+    assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("timestamp", "123456789"));
+    assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("id", "1"));
   }
 
 }
