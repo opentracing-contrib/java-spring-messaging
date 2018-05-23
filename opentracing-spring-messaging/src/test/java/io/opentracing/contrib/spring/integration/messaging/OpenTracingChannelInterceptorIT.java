@@ -110,6 +110,7 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
   }
 
   @Test
+  @Ignore
   public void shouldKeepHeadersMutable() {
     tracedChannel.send(MessageBuilder.withPayload("hi")
         .build());
