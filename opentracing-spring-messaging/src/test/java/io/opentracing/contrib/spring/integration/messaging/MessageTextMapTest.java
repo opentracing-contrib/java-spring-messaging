@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.integration.support.MutableMessageHeaders;
 import org.springframework.messaging.Message;
@@ -79,4 +80,21 @@ public class MessageTextMapTest {
     assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("id", "1"));
   }
 
+  @Test
+  public void testPreserveType() {
+    MutableMessageHeaders headers = new MutableMessageHeaders(new HashMap<>());
+    headers.put("int", new Integer(1));
+    headers.put("double", new Double(2.2));
+    headers.put("string", "foo");
+
+    MessageTextMap<String> textmap = new MessageTextMap<>(MessageBuilder.createMessage("test", headers));
+    textmap.iterator();
+    textmap.put("bar", "baz");
+
+    Message<String> message = textmap.getMessage();
+    Assert.assertEquals(new Double(2.2), message.getHeaders().get("double"));
+    Assert.assertEquals(new Integer(1), message.getHeaders().get("int"));
+    Assert.assertEquals("foo", message.getHeaders().get("string"));
+    Assert.assertEquals("baz", message.getHeaders().get("bar"));
+  }
 }
