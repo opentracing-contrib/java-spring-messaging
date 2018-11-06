@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.integration.support.MutableMessageHeaders;
@@ -69,7 +70,8 @@ public class MessageTextMapTest {
   @Test
   public void shouldPreserveTimestampAndId() {
     MutableMessageHeaders headers = new MutableMessageHeaders(new HashMap<>());
-    headers.put("id", "1");
+    String id = UUID.randomUUID().toString();
+    headers.put("id", id);
     headers.put("timestamp", "123456789");
     Message<String> message = MessageBuilder.createMessage("test", headers);
 
@@ -77,7 +79,7 @@ public class MessageTextMapTest {
     Message<String> copiedMessage = map.getMessage();
 
     assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("timestamp", "123456789"));
-    assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("id", "1"));
+    assertThat(copiedMessage.getHeaders()).contains(new AbstractMap.SimpleEntry<>("id", id));
   }
 
   @Test

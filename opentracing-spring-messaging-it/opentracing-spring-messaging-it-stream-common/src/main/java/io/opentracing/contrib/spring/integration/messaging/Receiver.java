@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 The OpenTracing Authors
+ * Copyright 2017-2018 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,6 @@ import java.util.List;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.cloud.stream.messaging.Sink;
-import org.springframework.messaging.Message;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
@@ -27,14 +26,14 @@ import org.springframework.messaging.Message;
 @EnableBinding(Sink.class)
 public class Receiver {
 
-  private final List<Message> receivedMessages = new ArrayList<>();
+  private final List<String> receivedMessages = new ArrayList<>();
 
   @StreamListener(Sink.INPUT)
-  public void receive(Message message) {
+  public void receive(String message) {
     receivedMessages.add(message);
   }
 
-  public List<Message> getReceivedMessages() {
+  public List<String> getReceivedMessages() {
     return receivedMessages;
   }
 
