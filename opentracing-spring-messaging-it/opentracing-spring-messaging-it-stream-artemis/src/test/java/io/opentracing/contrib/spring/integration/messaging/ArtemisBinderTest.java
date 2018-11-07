@@ -83,7 +83,7 @@ public class ArtemisBinderTest {
   }
 
   @Test
-  public void testFromFromJmsTemplateToSink() {
+  public void testFlowFromJmsTemplateToSink() {
     jmsTemplate.setPubSubDomain(true);
     jmsTemplate.convertAndSend("testDestination", "Ping");
 

@@ -73,10 +73,10 @@ public class KafkaBinderTest {
     assertThat(outputSpan.tags()).containsEntry(Tags.COMPONENT.getKey(), OpenTracingChannelInterceptor.COMPONENT_NAME);
     assertThat(outputSpan.tags()).containsEntry(Tags.MESSAGE_BUS_DESTINATION.getKey(), "output");
 
-    MockSpan inputSpan = getSpanByOperation("send:input");
-    assertThat(inputSpan.parentId()).isEqualTo(0);
+    MockSpan inputSpan = getSpanByOperation("receive:input");
+    assertThat(inputSpan.parentId()).isEqualTo(outputSpan.context().spanId());
     assertThat(inputSpan.tags()).hasSize(3);
-    assertThat(inputSpan.tags()).containsEntry(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
+    assertThat(inputSpan.tags()).containsEntry(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
     assertThat(inputSpan.tags()).containsEntry(Tags.COMPONENT.getKey(), OpenTracingChannelInterceptor.COMPONENT_NAME);
     assertThat(inputSpan.tags()).containsEntry(Tags.MESSAGE_BUS_DESTINATION.getKey(), "input");
 
