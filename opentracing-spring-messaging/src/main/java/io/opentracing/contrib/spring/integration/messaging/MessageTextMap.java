@@ -40,7 +40,11 @@ public class MessageTextMap<T> implements TextMap {
     Map<String, String> stringHeaders = new HashMap<>(headers.size());
     headers.forEach((k, v) -> {
       if (v instanceof byte[]) {
-        stringHeaders.put(k, new String((byte[])v));
+        try {
+          stringHeaders.put(k, new String((byte[])v));
+        } catch (Exception ex) {
+          stringHeaders.put(k, String.valueOf(v));
+        }
       } else {
         stringHeaders.put(k, String.valueOf(v));
       }
