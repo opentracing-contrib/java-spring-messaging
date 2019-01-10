@@ -15,8 +15,10 @@ package io.opentracing.contrib.spring.integration.messaging;
 
 import io.opentracing.propagation.TextMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.integration.support.MutableMessageHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -30,9 +32,12 @@ public class MessageTextMap<T> implements TextMap {
 
   private final MutableMessageHeaders headers;
 
+  private final Set<String> byteHeaders;
+
   public MessageTextMap(Message<T> message) {
     this.message = message;
     this.headers = new MutableMessageHeaders(message.getHeaders());
+    this.byteHeaders = new HashSet<>();
   }
 
   @Override
@@ -42,6 +47,7 @@ public class MessageTextMap<T> implements TextMap {
       if (v instanceof byte[]) {
         try {
           stringHeaders.put(k, new String((byte[])v));
+          byteHeaders.add(k);
         } catch (Exception ex) {
           stringHeaders.put(k, String.valueOf(v));
         }
@@ -54,7 +60,7 @@ public class MessageTextMap<T> implements TextMap {
 
   @Override
   public void put(String key, String value) {
-    headers.put(key, value);
+    headers.put(key, byteHeaders.contains(key) ? value.getBytes() : value);
   }
 
   public Message<T> getMessage() {
