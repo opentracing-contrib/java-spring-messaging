@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,13 +11,14 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package io.opentracing.contrib.spring.integration.messaging;
 
 import io.opentracing.propagation.TextMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.integration.support.MutableMessageHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -31,21 +32,35 @@ public class MessageTextMap<T> implements TextMap {
 
   private final MutableMessageHeaders headers;
 
+  private final Set<String> byteHeaders;
+
   public MessageTextMap(Message<T> message) {
     this.message = message;
     this.headers = new MutableMessageHeaders(message.getHeaders());
+    this.byteHeaders = new HashSet<>();
   }
 
   @Override
   public Iterator<Map.Entry<String, String>> iterator() {
     Map<String, String> stringHeaders = new HashMap<>(headers.size());
-    headers.forEach((k, v) -> stringHeaders.put(k, String.valueOf(v)));
+    headers.forEach((k, v) -> {
+      if (v instanceof byte[]) {
+        try {
+          stringHeaders.put(k, new String((byte[])v));
+          byteHeaders.add(k);
+        } catch (Exception ex) {
+          stringHeaders.put(k, String.valueOf(v));
+        }
+      } else {
+        stringHeaders.put(k, String.valueOf(v));
+      }
+    });
     return stringHeaders.entrySet().iterator();
   }
 
   @Override
   public void put(String key, String value) {
-    headers.put(key, value);
+    headers.put(key, byteHeaders.contains(key) ? value.getBytes() : value);
   }
 
   public Message<T> getMessage() {
