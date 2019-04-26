@@ -53,7 +53,8 @@
     </plugins>
   </build>
   <modules>
-    <module>opentracing-spring-messaging-it-stream-artemis</module>
+    <!-- TODO enable once Artemis binder supports Greenwich.SR2 -->
+    <!--<module>opentracing-spring-messaging-it-stream-artemis</module>-->
     <module>opentracing-spring-messaging-it-stream-kafka</module>
     <module>opentracing-spring-messaging-it-stream-rabbit</module>
     <module>opentracing-spring-messaging-it-stream-common</module>
