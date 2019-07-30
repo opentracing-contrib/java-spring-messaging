@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -122,7 +122,7 @@ public class OpenTracingChannelInterceptorTest {
     Message<?> message = interceptor.preSend(originalMessage, mockMessageChannel);
     assertThat(message.getPayload()).isEqualTo(originalMessage.getPayload());
 
-    verify(mockTracer).extract(eq(Format.Builtin.TEXT_MAP), any(MessageTextMap.class));
+    verify(mockTracer).extract(eq(Format.Builtin.TEXT_MAP), any(JmsTextMapExtractAdapter.class));
     verify(mockTracer).buildSpan(String.format("receive:%s", mockMessageChannel.toString()));
     verify(mockSpanBuilder).addReference(References.FOLLOWS_FROM, null);
     verify(mockSpanBuilder).startActive(true);

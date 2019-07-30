@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -53,6 +53,16 @@ public class MessageTextMapTest {
     map.put("k1", "v1");
 
     assertThat(map.iterator()).contains(new AbstractMap.SimpleEntry<>("k1", "v1"));
+  }
+
+  @Test
+  public void shouldEncodeKeyWithDash() {
+    Message<String> message = MessageBuilder.withPayload("test")
+            .build();
+    MessageTextMap<String> map = new MessageTextMap<>(message);
+    map.put("uber-trace-id", "1435645");
+
+    assertThat(map.iterator()).contains(new AbstractMap.SimpleEntry<>("uber_$dash$_trace_$dash$_id", "1435645"));
   }
 
   @Test
