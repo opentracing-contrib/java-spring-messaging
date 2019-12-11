@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@ package io.opentracing.contrib.spring.integration.messaging;
 
 import io.opentracing.References;
 import io.opentracing.Scope;
+import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -66,32 +67,42 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
       spanBuilder.asChildOf(extractedContext);
     }
 
-    Span span = spanBuilder.startActive(true).span();
+    Span span = spanBuilder.start();
+    tracer.activateSpan(span);
+    try {
+      if (isConsumer) {
+        log.trace("Adding 'messageConsumed' header");
+        carrier.put(Headers.MESSAGE_CONSUMED, "true");
+        // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
+      } else {
+        log.trace("Adding 'messageSent' header");
+        carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
+      }
 
-    if (isConsumer) {
-      log.trace("Adding 'messageConsumed' header");
-      carrier.put(Headers.MESSAGE_CONSUMED, "true");
-      // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
-    } else {
-      log.trace("Adding 'messageSent' header");
-      carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
+      tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
+      return carrier.getMessage();
+    } catch (Exception e) {
+      span.log("Error during span execution " + e.getMessage()); // Report any errors properly.
+      span.finish();
+      throw e;
     }
-
-    tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
-    return carrier.getMessage();
   }
 
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-    Scope scope = tracer.scopeManager().active();
-    if (scope == null) {
+    ScopeManager scopeManager = tracer.scopeManager();
+    Span span = scopeManager.activeSpan();
+    if (span == null) {
       return;
     }
 
-    log.trace(String.format("Completed sending and current span is %s", scope.span()));
-    handleException(ex, scope.span());
-    log.trace("Closing messaging span scope " + scope);
+    log.trace(String.format("Completed sending and current span is %s", span));
+    handleException(ex, span);
+    span.finish();
+
+    Scope scope = scopeManager.activate(span);
     scope.close();
+    log.trace("Closing messaging span scope " + scope);
     log.trace(String.format("Messaging span scope %s successfully closed", scope));
   }
 
