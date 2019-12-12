@@ -13,9 +13,10 @@
  */
 package io.opentracing.contrib.spring.integration.messaging;
 
+import static io.opentracing.contrib.spring.integration.messaging.Headers.SCOPE_HEADER;
+
 import io.opentracing.References;
 import io.opentracing.Scope;
-import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -29,14 +30,13 @@ import org.springframework.integration.context.IntegrationObjectSupport;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.support.ChannelInterceptorAdapter;
 import org.springframework.messaging.support.ExecutorChannelInterceptor;
 import org.springframework.util.ClassUtils;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter implements ExecutorChannelInterceptor {
+public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor {
   private static final Log log = LogFactory.getLog(OpenTracingChannelInterceptor.class);
 
   static final String COMPONENT_NAME = "spring-messaging";
@@ -53,9 +53,9 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
     boolean isConsumer = message.getHeaders().containsKey(Headers.MESSAGE_SENT_FROM_CLIENT);
 
     SpanBuilder spanBuilder = tracer.buildSpan(getOperationName(channel, isConsumer))
-        .withTag(Tags.SPAN_KIND.getKey(), isConsumer ? Tags.SPAN_KIND_CONSUMER : Tags.SPAN_KIND_PRODUCER)
-        .withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME)
-        .withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), getChannelName(channel));
+            .withTag(Tags.SPAN_KIND.getKey(), isConsumer ? Tags.SPAN_KIND_CONSUMER : Tags.SPAN_KIND_PRODUCER)
+            .withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME)
+            .withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), getChannelName(channel));
 
     MessageTextMap<?> carrier = new MessageTextMap<>(message);
     SpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
@@ -68,7 +68,8 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
     }
 
     Span span = spanBuilder.start();
-    tracer.activateSpan(span);
+    Scope scope = tracer.activateSpan(span);
+    carrier.addHeader(SCOPE_HEADER, scope);
     try {
       if (isConsumer) {
         log.trace("Adding 'messageConsumed' header");
@@ -78,32 +79,32 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
         log.trace("Adding 'messageSent' header");
         carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
       }
+      log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
 
       tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
       return carrier.getMessage();
     } catch (Exception e) {
       span.log("Error during span execution " + e.getMessage()); // Report any errors properly.
       span.finish();
+      scope.close();
       throw e;
     }
   }
 
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-    ScopeManager scopeManager = tracer.scopeManager();
-    Span span = scopeManager.activeSpan();
-    if (span == null) {
-      return;
+    if (message != null) {
+      Object scopeValue = message.getHeaders().get(SCOPE_HEADER);
+      if (scopeValue instanceof Scope) {
+        Span span = tracer.scopeManager().activeSpan();
+        handleException(ex, span);
+        span.finish();
+        log.trace(String.format("Completed sending of current span %s", span));
+        Scope scope = (Scope) scopeValue;
+        scope.close();
+        log.trace(String.format("Scope %s successfully closed", scope));
+      }
     }
-
-    log.trace(String.format("Completed sending and current span is %s", span));
-    handleException(ex, span);
-    span.finish();
-
-    Scope scope = scopeManager.activate(span);
-    scope.close();
-    log.trace("Closing messaging span scope " + scope);
-    log.trace(String.format("Messaging span scope %s successfully closed", scope));
   }
 
   @Override

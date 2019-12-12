@@ -63,6 +63,10 @@ public class MessageTextMap<T> implements TextMap {
     headers.put(key, byteHeaders.contains(key) ? value.getBytes() : value);
   }
 
+  public void addHeader(String key, Object value) {
+    headers.put(key, value);
+  }
+
   public Message<T> getMessage() {
     return MessageBuilder.fromMessage(message)
       .copyHeaders(headers)

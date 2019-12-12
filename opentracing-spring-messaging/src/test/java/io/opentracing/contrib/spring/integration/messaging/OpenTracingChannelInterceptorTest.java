@@ -13,6 +13,7 @@
  */
 package io.opentracing.contrib.spring.integration.messaging;
 
+import static io.opentracing.contrib.spring.integration.messaging.Headers.SCOPE_HEADER;
 import static io.opentracing.contrib.spring.integration.messaging.OpenTracingChannelInterceptor.COMPONENT_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -142,7 +143,7 @@ public class OpenTracingChannelInterceptorTest {
   @Test
   public void afterSendCompletionShouldFinishSpanForServerSendMessage() {
     Message<?> message = MessageBuilder.fromMessage(simpleMessage)
-        .setHeader(Headers.MESSAGE_CONSUMED, true)
+        .setHeader(Headers.MESSAGE_CONSUMED, true).setHeader(SCOPE_HEADER, mockScope)
         .build();
     when(mockScopeManager.activeSpan()).thenReturn(mockSpan);
 
@@ -153,18 +154,24 @@ public class OpenTracingChannelInterceptorTest {
 
   @Test
   public void afterSendCompletionShouldFinishSpanForClientSendMessage() {
+    Message<?> message = MessageBuilder.fromMessage(simpleMessage)
+            .setHeader(SCOPE_HEADER, mockScope)
+            .build();
     when(mockScopeManager.activeSpan()).thenReturn(mockSpan);
 
-    interceptor.afterSendCompletion(simpleMessage, null, true, null);
+    interceptor.afterSendCompletion(message, null, true, null);
 
     verify(mockScope).close();
   }
 
   @Test
   public void afterSendCompletionShouldFinishSpanForException() {
+    Message<?> message = MessageBuilder.fromMessage(simpleMessage)
+            .setHeader(SCOPE_HEADER, mockScope)
+            .build();
     when(mockScopeManager.activeSpan()).thenReturn(mockSpan);
 
-    interceptor.afterSendCompletion(simpleMessage, null, true, new Exception("test"));
+    interceptor.afterSendCompletion(message, null, true, new Exception("test"));
 
     verify(mockSpan).setTag(Tags.ERROR.getKey(), true);
     verify(mockScope).close();

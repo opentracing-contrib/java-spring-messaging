@@ -97,7 +97,6 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
   public void after() {
     tracedChannel.unsubscribe(this);
     mockTracer.reset();
-    mockTracer.activateSpan(null);
   }
 
   @Test
