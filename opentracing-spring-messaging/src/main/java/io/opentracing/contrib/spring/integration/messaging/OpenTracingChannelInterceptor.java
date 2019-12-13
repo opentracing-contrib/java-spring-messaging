@@ -53,9 +53,9 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
     boolean isConsumer = message.getHeaders().containsKey(Headers.MESSAGE_SENT_FROM_CLIENT);
 
     SpanBuilder spanBuilder = tracer.buildSpan(getOperationName(channel, isConsumer))
-            .withTag(Tags.SPAN_KIND.getKey(), isConsumer ? Tags.SPAN_KIND_CONSUMER : Tags.SPAN_KIND_PRODUCER)
-            .withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME)
-            .withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), getChannelName(channel));
+        .withTag(Tags.SPAN_KIND.getKey(), isConsumer ? Tags.SPAN_KIND_CONSUMER : Tags.SPAN_KIND_PRODUCER)
+        .withTag(Tags.COMPONENT.getKey(), COMPONENT_NAME)
+        .withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), getChannelName(channel));
 
     MessageTextMap<?> carrier = new MessageTextMap<>(message);
     SpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
@@ -70,25 +70,18 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
     Span span = spanBuilder.start();
     Scope scope = tracer.activateSpan(span);
     carrier.addHeader(SCOPE_HEADER, scope);
-    try {
-      if (isConsumer) {
-        log.trace("Adding 'messageConsumed' header");
-        carrier.put(Headers.MESSAGE_CONSUMED, "true");
-        // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
-      } else {
-        log.trace("Adding 'messageSent' header");
-        carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
-      }
-      log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
-
-      tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
-      return carrier.getMessage();
-    } catch (Exception e) {
-      span.log("Error during span execution " + e.getMessage()); // Report any errors properly.
-      span.finish();
-      scope.close();
-      throw e;
+    if (isConsumer) {
+      log.trace("Adding 'messageConsumed' header");
+      carrier.put(Headers.MESSAGE_CONSUMED, "true");
+      // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
+    } else {
+      log.trace("Adding 'messageSent' header");
+      carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
     }
+    log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
+
+    tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
+    return carrier.getMessage();
   }
 
   @Override
