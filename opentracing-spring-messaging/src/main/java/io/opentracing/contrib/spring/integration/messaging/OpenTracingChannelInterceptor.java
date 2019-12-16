@@ -69,19 +69,25 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
 
     Span span = spanBuilder.start();
     Scope scope = tracer.activateSpan(span);
-    carrier.addHeader(SCOPE_HEADER, scope);
-    if (isConsumer) {
-      log.trace("Adding 'messageConsumed' header");
-      carrier.put(Headers.MESSAGE_CONSUMED, "true");
-      // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
-    } else {
-      log.trace("Adding 'messageSent' header");
-      carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
-    }
-    log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
+    try {
+      carrier.addHeader(SCOPE_HEADER, scope);
+      if (isConsumer) {
+        log.trace("Adding 'messageConsumed' header");
+        carrier.put(Headers.MESSAGE_CONSUMED, "true");
+        // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
+      } else {
+        log.trace("Adding 'messageSent' header");
+        carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
+      }
+      log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
 
-    tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
-    return carrier.getMessage();
+      tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
+      return carrier.getMessage();
+    } catch (Exception e) {
+      //Ensure scope is close in case of exceptions
+      closeResources(e, scope, span);
+      throw e;
+    }
   }
 
   @Override
@@ -89,13 +95,16 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
     Object scopeValue = message.getHeaders().get(SCOPE_HEADER);
     if (scopeValue instanceof Scope) {
       Span span = tracer.scopeManager().activeSpan();
-      handleException(ex, span);
-      span.finish();
-      log.trace(String.format("Completed sending of current span %s", span));
-      Scope scope = (Scope) scopeValue;
-      scope.close();
-      log.trace(String.format("Scope %s successfully closed", scope));
+      closeResources(ex, (Scope) scopeValue, span);
     }
+  }
+
+  private void closeResources(Exception ex, Scope scopeValue, Span span) {
+    handleException(ex, span);
+    span.finish();
+    log.trace(String.format("Completed sending of current span %s", span));
+    scopeValue.close();
+    log.trace(String.format("Scope %s successfully closed", scopeValue));
   }
 
   @Override
