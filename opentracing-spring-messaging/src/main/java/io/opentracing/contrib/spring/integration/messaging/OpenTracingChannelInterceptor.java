@@ -86,17 +86,15 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
 
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-    if (message != null) {
-      Object scopeValue = message.getHeaders().get(SCOPE_HEADER);
-      if (scopeValue instanceof Scope) {
-        Span span = tracer.scopeManager().activeSpan();
-        handleException(ex, span);
-        span.finish();
-        log.trace(String.format("Completed sending of current span %s", span));
-        Scope scope = (Scope) scopeValue;
-        scope.close();
-        log.trace(String.format("Scope %s successfully closed", scope));
-      }
+    Object scopeValue = message.getHeaders().get(SCOPE_HEADER);
+    if (scopeValue instanceof Scope) {
+      Span span = tracer.scopeManager().activeSpan();
+      handleException(ex, span);
+      span.finish();
+      log.trace(String.format("Completed sending of current span %s", span));
+      Scope scope = (Scope) scopeValue;
+      scope.close();
+      log.trace(String.format("Scope %s successfully closed", scope));
     }
   }
 

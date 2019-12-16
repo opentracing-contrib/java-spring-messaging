@@ -135,9 +135,15 @@ public class OpenTracingChannelInterceptorTest {
 
   @Test
   public void afterSendCompletionShouldDoNothingWithoutSpan() {
-    interceptor.afterSendCompletion(null, null, true, null);
+    Message<?> message = MessageBuilder.fromMessage(simpleMessage)
+            .setHeader(Headers.MESSAGE_CONSUMED, true).setHeader(SCOPE_HEADER, mockScope)
+            .build();
+    when(mockScopeManager.activeSpan()).thenReturn(mockSpan);
+
+    interceptor.afterSendCompletion(message, null, true, null);
 
     verify(mockSpan, times(0)).log(anyString());
+    verify(mockSpan, times(1)).finish();
   }
 
   @Test
