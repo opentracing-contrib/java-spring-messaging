@@ -69,25 +69,19 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
 
     Span span = spanBuilder.start();
     Scope scope = tracer.activateSpan(span);
-    try {
-      carrier.addHeader(SCOPE_HEADER, scope);
-      if (isConsumer) {
-        log.trace("Adding 'messageConsumed' header");
-        carrier.put(Headers.MESSAGE_CONSUMED, "true");
-        // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
-      } else {
-        log.trace("Adding 'messageSent' header");
-        carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
-      }
-      log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
-
-      tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
-      return carrier.getMessage();
-    } catch (Exception e) {
-      //Ensure scope is close in case of exceptions
-      closeResources(e, scope, span);
-      throw e;
+    carrier.addHeader(SCOPE_HEADER, scope);
+    if (isConsumer) {
+      log.trace("Adding 'messageConsumed' header");
+      carrier.put(Headers.MESSAGE_CONSUMED, "true");
+      // TODO maybe we should remove Headers.MESSAGE_SENT_FROM_CLIENT header here?
+    } else {
+      log.trace("Adding 'messageSent' header");
+      carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
     }
+    log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
+
+    tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
+    return carrier.getMessage();
   }
 
   @Override
