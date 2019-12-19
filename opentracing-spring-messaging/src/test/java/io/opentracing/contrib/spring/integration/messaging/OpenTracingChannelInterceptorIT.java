@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -162,9 +162,11 @@ public class OpenTracingChannelInterceptorIT implements MessageHandler {
   public void shouldCreateSpanWithActiveParent() {
     MockSpan parentSpan = mockTracer.buildSpan("http:testSendMessage")
         .start();
-    try (Scope scope = mockTracer.scopeManager().activate(parentSpan, true)) {
+    try (Scope scope = mockTracer.scopeManager().activate(parentSpan)) {
       tracedChannel.send(MessageBuilder.withPayload("hi")
           .build());
+    } finally {
+      parentSpan.finish();
     }
 
     then(message).isNotNull();

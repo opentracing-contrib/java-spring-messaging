@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2019 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,6 +12,8 @@
  * the License.
  */
 package io.opentracing.contrib.spring.integration.messaging;
+
+import static io.opentracing.contrib.spring.integration.messaging.Headers.SCOPE_HEADER;
 
 import io.opentracing.References;
 import io.opentracing.Scope;
@@ -28,14 +30,13 @@ import org.springframework.integration.context.IntegrationObjectSupport;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.support.ChannelInterceptorAdapter;
 import org.springframework.messaging.support.ExecutorChannelInterceptor;
 import org.springframework.util.ClassUtils;
 
 /**
  * @author <a href="mailto:gytis@redhat.com">Gytis Trikleris</a>
  */
-public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter implements ExecutorChannelInterceptor {
+public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor {
   private static final Log log = LogFactory.getLog(OpenTracingChannelInterceptor.class);
 
   static final String COMPONENT_NAME = "spring-messaging";
@@ -66,8 +67,9 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
       spanBuilder.asChildOf(extractedContext);
     }
 
-    Span span = spanBuilder.startActive(true).span();
-
+    Span span = spanBuilder.start();
+    Scope scope = tracer.activateSpan(span);
+    carrier.addHeader(SCOPE_HEADER, scope);
     if (isConsumer) {
       log.trace("Adding 'messageConsumed' header");
       carrier.put(Headers.MESSAGE_CONSUMED, "true");
@@ -76,6 +78,7 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
       log.trace("Adding 'messageSent' header");
       carrier.put(Headers.MESSAGE_SENT_FROM_CLIENT, "true");
     }
+    log.trace(String.format("Pre-send: starting a new span %s , carrier extracted context %s", span, extractedContext));
 
     tracer.inject(span.context(), Format.Builtin.TEXT_MAP, carrier);
     return carrier.getMessage();
@@ -83,16 +86,19 @@ public class OpenTracingChannelInterceptor extends ChannelInterceptorAdapter imp
 
   @Override
   public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-    Scope scope = tracer.scopeManager().active();
-    if (scope == null) {
-      return;
+    Object scopeValue = message.getHeaders().get(SCOPE_HEADER);
+    if (scopeValue instanceof Scope) {
+      Span span = tracer.scopeManager().activeSpan();
+      closeResources(ex, (Scope) scopeValue, span);
     }
+  }
 
-    log.trace(String.format("Completed sending and current span is %s", scope.span()));
-    handleException(ex, scope.span());
-    log.trace("Closing messaging span scope " + scope);
-    scope.close();
-    log.trace(String.format("Messaging span scope %s successfully closed", scope));
+  private void closeResources(Exception ex, Scope scopeValue, Span span) {
+    handleException(ex, span);
+    span.finish();
+    log.trace(String.format("Completed sending of current span %s", span));
+    scopeValue.close();
+    log.trace(String.format("Scope %s successfully closed", scopeValue));
   }
 
   @Override
