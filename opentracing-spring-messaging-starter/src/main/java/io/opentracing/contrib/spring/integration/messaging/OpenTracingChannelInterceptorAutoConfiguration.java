@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2018 The OpenTracing Authors
+ * Copyright 2017-2020 The OpenTracing Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package io.opentracing.contrib.spring.integration.messaging;
 import io.opentracing.Tracer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.config.GlobalChannelInterceptor;
@@ -27,6 +28,7 @@ import org.springframework.messaging.support.ChannelInterceptorAdapter;
 @Configuration
 @ConditionalOnBean(Tracer.class)
 @ConditionalOnClass(ChannelInterceptorAdapter.class)
+@ConditionalOnProperty(name = "opentracing.spring.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class OpenTracingChannelInterceptorAutoConfiguration {
 
   @Bean

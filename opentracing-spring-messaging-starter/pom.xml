@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2017-2019 The OpenTracing Authors
+    Copyright 2017-2020 The OpenTracing Authors
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
     in compliance with the License. You may obtain a copy of the License at
@@ -47,6 +47,11 @@
     <dependency>
       <groupId>org.springframework.integration</groupId>
       <artifactId>spring-integration-core</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
   </dependencies>
