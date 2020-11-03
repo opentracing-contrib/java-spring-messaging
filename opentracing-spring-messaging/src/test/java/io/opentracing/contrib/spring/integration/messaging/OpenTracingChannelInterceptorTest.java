@@ -124,7 +124,7 @@ public class OpenTracingChannelInterceptorTest {
     Message<?> message = interceptor.preSend(originalMessage, mockMessageChannel);
     assertThat(message.getPayload()).isEqualTo(originalMessage.getPayload());
 
-    verify(mockTracer).extract(eq(Format.Builtin.TEXT_MAP), any(MessageTextMap.class));
+    verify(mockTracer).extract(eq(Format.Builtin.TEXT_MAP), any(JmsTextMapExtractAdapter.class));
     verify(mockTracer).buildSpan(String.format("receive:%s", mockMessageChannel.toString()));
     verify(mockSpanBuilder).addReference(References.FOLLOWS_FROM, null);
     verify(mockSpanBuilder).start();

@@ -60,7 +60,7 @@ public class MessageTextMap<T> implements TextMap {
 
   @Override
   public void put(String key, String value) {
-    headers.put(key, byteHeaders.contains(key) ? value.getBytes() : value);
+    headers.put(encodeDash(key), byteHeaders.contains(key) ? value.getBytes() : value);
   }
 
   public void addHeader(String key, Object value) {
@@ -72,4 +72,13 @@ public class MessageTextMap<T> implements TextMap {
       .copyHeaders(headers)
       .build();
   }
+
+  private String encodeDash(String key) {
+    if (key == null || key.isEmpty()) {
+      return key;
+    }
+
+    return key.replace("-", JmsTextMapExtractAdapter.DASH);
+  }
+
 }

@@ -58,7 +58,7 @@ public class OpenTracingChannelInterceptor implements ExecutorChannelInterceptor
         .withTag(Tags.MESSAGE_BUS_DESTINATION.getKey(), getChannelName(channel));
 
     MessageTextMap<?> carrier = new MessageTextMap<>(message);
-    SpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, carrier);
+    SpanContext extractedContext = tracer.extract(Format.Builtin.TEXT_MAP, new JmsTextMapExtractAdapter(carrier));
     if (isConsumer) {
       spanBuilder.addReference(References.FOLLOWS_FROM, extractedContext);
     } else if (tracer.activeSpan() == null) {
